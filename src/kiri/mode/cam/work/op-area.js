@@ -207,9 +207,14 @@ class OpArea extends CamOp {
                     //everything else uses the tool stepover
                     offsets.push(-toolOver);
                     //actually offset the walls inwards
+                    let outermost = [];
                     POLY.offset(clip, offsets, {
-                        count: op.walls ? 1 : (op.steps ?? 999), outs, flat: true, z: z - zMov, ...offopt
+                        count: op.walls ? 1 : (op.steps ?? 999), outs, flat: true, z: z - zMov, ...offopt,
+                        call: (polys, count, depth) => {
+                            if (depth === 0) outermost = polys;
+                        }
                     });
+                    if (op.dogbones) outermost.forEach(out => out.addDogbones(toolDiam / 5, op.revbones));
                     // if we see no offsets, re-check the mesh bottom Z then exit
                     if (outs.length === 0) {
                         if (bounds && lzo > bounds.min.z) {
