@@ -12,6 +12,14 @@ export let surfaceOn = false;
 let alert, lastWidget;
 
 export function surfaceAdd(ev) {
+    return surfaceSelect(false);
+}
+
+export function surfaceAll() {
+    return surfaceSelect(true);
+}
+
+function surfaceSelect(findAll) {
     if (surfaceOn) {
         return surfaceDone();
     }
@@ -21,16 +29,32 @@ export function surfaceAdd(ev) {
     alert = api.show.alert("analyzing surfaces...", 1000);
     let radians = (follow ?? edgeangle) * DEG2RAD;
     CAM.surface_prep(env.currentIndex * RAD2DEG, () => {
+        if (!surfaceOn) {
+            return;
+        }
         api.hide.alert(alert);
         alert = api.show.alert("[esc] cancels surface selection");
-        for (let [wid, arr] of Object.entries(surfaces)) {
-            let widget = api.widgets.forid(wid);
-            if (widget && arr.length)
-                for (let faceid of arr) {
-                    CAM.surface_toggle(widget, faceid, radians, faceids => {
-                        // surfaces[widget.id] = faceids;
-                    });
-                }
+        if (findAll) {
+            for (let wid of Object.keys(surfaces)) {
+                delete surfaces[wid];
+            }
+            api.widgets.for(widget => {
+                CAM.surface_all(widget, radians, faceids => {
+                    if (surfaceOn) {
+                        surfaces[widget.id] = faceids;
+                    }
+                });
+            });
+        } else {
+            for (let [wid, arr] of Object.entries(surfaces)) {
+                let widget = api.widgets.forid(wid);
+                if (widget && arr.length)
+                    for (let faceid of arr) {
+                        CAM.surface_toggle(widget, faceid, radians, faceids => {
+                            // surfaces[widget.id] = faceids;
+                        });
+                    }
+            }
         }
     });
     surfaceOn = env.hoveredOp;

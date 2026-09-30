@@ -23,6 +23,24 @@ function surface_find(widget, faces, radians, filterZ) {
     return widget.tool.findConnectedSurface(faces, radians, filterZ);
 };
 
+function surface_find_all(widget, radians) {
+    surface_prep(widget);
+    const normals = widget.tool.getIndex().faces;
+    const found = {};
+    const surfaces = [];
+    const minZ = Math.cos(radians);
+    for (let face = 0; face < normals.length / 6; face++) {
+        if (found[face] || Math.abs(normals[face * 6 + 2]) < minZ) {
+            continue;
+        }
+        const faces = widget.tool.findConnectedSurface([face], radians, undefined, found);
+        if (faces.length) {
+            surfaces.push({ face, faces });
+        }
+    }
+    return surfaces;
+};
+
 function init(worker) {
 
     const { dispatch } = worker;
@@ -51,6 +69,12 @@ function init(worker) {
         const widget = worker.cache[id];
         const faces = surface_find(widget, [face], radians);
         send.done(faces);
+    }
+
+    dispatch.cam_surface_all = function(data, send) {
+        const { id, radians } = data;
+        const widget = worker.cache[id];
+        send.done(surface_find_all(widget, radians));
     }
 
     dispatch.cam_traces = async function(data, send) {
