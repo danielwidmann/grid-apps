@@ -944,6 +944,88 @@ function layout() {
 }
 
 /**
+ * Orient each CAM part with its broad face that has the most removed area facing up,
+ * then arrange the parts on the platform.
+ */
+function arrange_flat() {
+    api.view.set_arrange();
+    const target = new THREE.Vector3(0, 0, 1);
+    const roots = api.widgets.all().filter(widget => widget.id === widget.group.id);
+
+    for (let widget of roots) {
+        const geometry = widget.mesh.geometry;
+        const positions = geometry.attributes.position;
+        const indices = geometry.index;
+        const planes = new Map();
+        const a = new THREE.Vector3();
+        const b = new THREE.Vector3();
+        const c = new THREE.Vector3();
+        const ab = new THREE.Vector3();
+        const ac = new THREE.Vector3();
+        const normal = new THREE.Vector3();
+
+        for (let i = 0, count = indices ? indices.count : positions.count; i < count; i += 3) {
+            const ia = indices ? indices.getX(i) : i;
+            const ib = indices ? indices.getX(i + 1) : i + 1;
+            const ic = indices ? indices.getX(i + 2) : i + 2;
+            a.fromBufferAttribute(positions, ia);
+            b.fromBufferAttribute(positions, ib);
+            c.fromBufferAttribute(positions, ic);
+            ab.subVectors(b, a);
+            ac.subVectors(c, a);
+            normal.crossVectors(ab, ac);
+            const area = normal.length() / 2;
+            if (area === 0) {
+                continue;
+            }
+            normal.normalize();
+            const offset = normal.dot(a);
+            const key = [
+                normal.x.toFixed(4),
+                normal.y.toFixed(4),
+                normal.z.toFixed(4),
+                offset.toFixed(4)
+            ].join(':');
+            const plane = planes.get(key);
+            if (plane) {
+                plane.area += area;
+            } else {
+                planes.set(key, { area, normal: normal.clone() });
+            }
+        }
+
+        const surfaces = [...planes.values()];
+        let face;
+        let largestPairArea = -1;
+        for (let i = 0; i < surfaces.length; i++) {
+            for (let j = i + 1; j < surfaces.length; j++) {
+                const first = surfaces[i];
+                const second = surfaces[j];
+                if (first.normal.dot(second.normal) > -0.999) {
+                    continue;
+                }
+                const pairArea = Math.min(first.area, second.area);
+                if (pairArea > largestPairArea) {
+                    largestPairArea = pairArea;
+                    face = first.area < second.area ? first : second;
+                }
+            }
+        }
+
+        if (!face && surfaces.length) {
+            face = surfaces.reduce((largest, surface) =>
+                surface.area > largest.area ? surface : largest
+            );
+        }
+        if (face) {
+            widget.rotate(new THREE.Quaternion().setFromUnitVectors(face.normal, target));
+        }
+    }
+
+    layout();
+}
+
+/**
  * Create widget from vertex data and add to platform.
  * Optionally saves to catalog and adds to group.
  * @param {Array} [group] - Optional group array for grouping multiple widgets
@@ -1231,6 +1313,7 @@ export const platform = {
     changed,
     delete: platformDelete,
     layout: layout,
+    arrange_flat,
     group,
     group_done,
     load,

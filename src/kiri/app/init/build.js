@@ -11,7 +11,8 @@ const surfaces = {
         };
         menubar.build({
             ...actions,
-            'view-arrange': stop(() => api.platform.layout()),
+            'view-arrange': stop(() => api.mode.is_cam() ?
+                api.platform.arrange_flat() : api.platform.layout()),
             'act-slice': stop(() => api.function.slice()),
             'act-preview': stop(() => api.function.print()),
             'act-animate': stop(() => api.function.animate()),

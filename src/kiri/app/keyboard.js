@@ -392,7 +392,11 @@ class KeyboardControl {
             case this.#cca('a'):
                 if (this.#api.view.get() === this.#VIEWS.ARRANGE) {
                     // auto arrange items on platform
-                    this.#platform.layout();
+                    if (this.#api.mode.is_cam()) {
+                        this.#platform.arrange_flat();
+                    } else {
+                        this.#platform.layout();
+                    }
                     if (!this.#api.conf.get().controller.spaceRandoX) {
                         this.#api.space.set_focus(this.#selection.widgets());
                     }
