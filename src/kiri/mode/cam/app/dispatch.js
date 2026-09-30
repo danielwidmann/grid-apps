@@ -11,6 +11,12 @@ function surface_prep(index, ondone) {
     });
 };
 
+function surface_find_all(radians, ondone) {
+    api.client.send("cam_surface_find_all", { radians }, output => {
+        ondone(output);
+    });
+};
+
 function surface_show(widget) {
     widget.selectFaces(Object.values(widget._surfaces).flat());
 };
@@ -110,6 +116,7 @@ function cylinderClear(widget) {
 
 export const CAM = {
     surface_prep,
+    surface_find_all,
     surface_show,
     cylinder_show,
     cylinderToggle,

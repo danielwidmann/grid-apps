@@ -7,7 +7,7 @@ import { Tool } from '../core/tool.js';
 import { opFlip } from './cl-flip.js';
 import { selectHoles } from './cl-hole.js';
 import { selectHelical } from './cl-helical.js';
-import { surfaceAdd } from './cl-surface.js';
+import { surfaceAdd, surfaceFindAll } from './cl-surface.js';
 import { traceAdd, traceClear, traceLoad } from './cl-trace.js';
 import { startFaceUp } from '../../../app/face-tool.js';
 import { showZBottom, showZTop, updateStock } from './cl-stock.js';
@@ -571,7 +571,10 @@ export function createPopOps() {
         ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
         exp_end: UC.endExpand(),
         sep: UC.newBlank({ class: "pop-sep" }),
-        menu: UC.newRow([UC.newButton("select", surfaceAdd)], { class: "ext-buttons f-row" }),
+        menu: UC.newRow([
+            UC.newButton("select", surfaceAdd),
+            UC.newButton("find all", surfaceFindAll)
+        ], { class: "ext-buttons f-row" }),
     };
 
     createPopOp('drill', {

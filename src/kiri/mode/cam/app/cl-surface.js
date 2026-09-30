@@ -46,6 +46,37 @@ export function surfaceAdd(ev) {
     };
 }
 
+export function surfaceFindAll() {
+    clearPops();
+    const { edgeangle } = api.conf.get().controller;
+    const radians = (env.poppedRec.follow ?? edgeangle ?? 5) * DEG2RAD;
+    alert = api.show.alert("analyzing surfaces...", 1000);
+    CAM.surface_prep(env.currentIndex * RAD2DEG, () => {
+        CAM.surface_find_all(radians, found => {
+            api.hide.alert(alert);
+            for (let widget of api.widgets.all()) {
+                CAM.surface_clear(widget);
+            }
+            env.poppedRec.surfaces = {};
+            for (let [wid, groups] of Object.entries(found)) {
+                let widget = api.widgets.forid(wid);
+                if (!widget) continue;
+                widget._surfaces = {};
+                for (let faces of groups) {
+                    if (faces.length) {
+                        widget._surfaces[faces[0]] = faces;
+                    }
+                }
+                env.poppedRec.surfaces[wid] = Object.keys(widget._surfaces).map(Number);
+                CAM.surface_show(widget);
+            }
+            if (!Object.values(env.poppedRec.surfaces).some(faces => faces.length)) {
+                api.show.alert("no horizontal surfaces found");
+            }
+        });
+    });
+}
+
 export function surfaceDone() {
     if (!(surfaceOn && env.poppedRec && env.poppedRec.surfaces)) {
         return;

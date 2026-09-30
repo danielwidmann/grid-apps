@@ -53,6 +53,39 @@ function init(worker) {
         send.done(faces);
     }
 
+    dispatch.cam_surface_find_all = function(data, send) {
+        const { radians } = data;
+        const minZ = Math.cos(Math.min(Math.max(radians, 0), Math.PI / 2));
+        const surfaces = {};
+        for (let widget of Object.values(worker.cache)) {
+            surface_prep(widget);
+            const normals = widget.tool.getIndex().faces;
+            const candidates = new Set();
+            for (let face = 0; face < normals.length / 6; face++) {
+                if (Math.abs(normals[face * 6 + 2]) >= minZ) {
+                    candidates.add(face);
+                }
+            }
+            const groups = surfaces[widget.id] = [];
+            while (candidates.size) {
+                const face = candidates.values().next().value;
+                candidates.delete(face);
+                const group = [face];
+                const check = [face];
+                for (let i = 0; i < check.length; i++) {
+                    for (let adjacent of widget.tool.getAdjacentFaces(check[i])) {
+                        if (candidates.delete(adjacent)) {
+                            group.push(adjacent);
+                            check.push(adjacent);
+                        }
+                    }
+                }
+                groups.push(group);
+            }
+        }
+        send.done(surfaces);
+    }
+
     dispatch.cam_traces = async function(data, send) {
         const { settings, single } = data;
         const widgets = Object.values(worker.cache);
