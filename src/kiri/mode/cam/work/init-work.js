@@ -55,7 +55,7 @@ function init(worker) {
 
     dispatch.cam_surface_find_all = function(data, send) {
         const { radians } = data;
-        const minZ = Math.cos(Math.min(Math.max(radians, 0), Math.PI / 2));
+        const minZ = Math.cos(Math.min(Math.max(radians, 0), 5 * Math.PI / 180));
         const surfaces = {};
         for (let widget of Object.values(worker.cache)) {
             surface_prep(widget);
