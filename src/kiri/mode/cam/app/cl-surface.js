@@ -39,10 +39,16 @@ function surfaceSelect(findAll) {
                 delete surfaces[wid];
             }
             api.widgets.for(widget => {
-                CAM.surface_all(widget, radians, faceids => {
-                    if (surfaceOn) {
-                        surfaces[widget.id] = faceids;
+                CAM.surface_all(widget, radians, found => {
+                    if (!surfaceOn) {
+                        return;
                     }
+                    let selected = widget._surfaces = {};
+                    for (let { face, faces } of found) {
+                        selected[face] = faces;
+                    }
+                    CAM.surface_show(widget);
+                    surfaces[widget.id] = Object.keys(selected).map(v => parseInt(v));
                 });
             });
         } else {

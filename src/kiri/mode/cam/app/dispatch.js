@@ -41,12 +41,7 @@ function surface_toggle(widget, face, radians, ondone) {
 
 function surface_all(widget, radians, ondone) {
     api.client.send("cam_surface_all", { id: widget.id, radians }, surfaces => {
-        let selected = widget._surfaces = {};
-        for (let { face, faces } of surfaces) {
-            selected[face] = faces;
-        }
-        surface_show(widget);
-        ondone(Object.keys(selected).map(v => parseInt(v)));
+        ondone(surfaces);
     });
 };
 
